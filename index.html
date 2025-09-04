@@ -1,0 +1,1053 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mengimplementasikan bridge interface di MikroTik</title>
+    <style>
+
+
+            /* Styling untuk container gambar */
+
+    .image-container {
+      margin: 30px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.4s ease;
+      max-width: 100%;
+      position: relative;
+    }
+
+    .image-container:hover {
+      transform: scale(1.02);
+      box-shadow: 0 15px 40px rgba(37, 99, 235, 0.4);
+    }
+
+    .image-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: all 0.4s ease;
+    }
+
+    .image-container:hover img {
+      filter: brightness(1.1);
+    }
+
+    .image-caption {
+      background: linear-gradient(to top, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.7), transparent);
+      padding: 15px 20px;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+    }
+
+    .image-container:hover .image-caption {
+      transform: translateY(0);
+    }
+
+    @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
+    @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
+    {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    :root {
+        --primary-color: #2563eb;
+        --secondary-color: #1e40af;
+        --accent-color: #06b6d4;
+        --success-color: #059669;
+        --warning-color: #d97706;
+        --danger-color: #dc2626;
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-card: #334155;
+        --bg-light: #f8fafc;
+        --text-primary: #f1f5f9;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
+        --border-color: #475569;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+        color: var(--text-primary);
+        line-height: 1.6;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    /* Tech Background Pattern */
+    .tech-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -3;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 80%, rgba(220, 38, 38, 0.08) 0%, transparent 50%);
+    }
+
+    .circuit-pattern {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -2;
+        opacity: 0.03;
+        background-image: 
+            linear-gradient(90deg, var(--primary-color) 1px, transparent 1px),
+            linear-gradient(var(--primary-color) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: circuitMove 20s linear infinite;
+    }
+
+    @keyframes circuitMove {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(50px, 50px); }
+    }
+
+    /* Floating particles */
+    .tech-particles {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        opacity: 0.6;
+        animation: float linear infinite;
+    }
+
+    @keyframes float {
+        0% { 
+            transform: translateY(100vh) translateX(0px);
+            opacity: 0;
+        }
+        10% { 
+            opacity: 0.6;
+        }
+        90% { 
+            opacity: 0.6;
+        }
+        100% { 
+            transform: translateY(-100px) translateX(100px);
+            opacity: 0;
+        }
+    }
+
+    /* Header */
+    .header {
+        text-align: center;
+        padding: 100px 20px 80px;
+        background: linear-gradient(135deg, 
+            rgba(37, 99, 235, 0.1) 0%, 
+            rgba(6, 182, 212, 0.1) 50%, 
+            rgba(5, 150, 105, 0.1) 100%);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+            45deg,
+            transparent,
+            rgba(37, 99, 235, 0.1),
+            transparent
+        );
+        animation: headerScan 10s linear infinite;
+    }
+
+    @keyframes headerScan {
+        0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+        100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+    }
+
+    .main-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 3.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color), var(--success-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 20px;
+        text-shadow: 0 0 50px rgba(37, 99, 235, 0.3);
+        animation: titleGlow 4s ease-in-out infinite alternate;
+        position: relative;
+    }
+
+    @keyframes titleGlow {
+        0% { filter: brightness(1); }
+        100% { filter: brightness(1.2); }
+    }
+
+    .subtitle {
+        font-size: 1.3rem;
+        color: var(--text-secondary);
+        margin-bottom: 40px;
+        font-weight: 300;
+        letter-spacing: 1px;
+    }
+
+    .author-card {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 600px;
+        margin: 0 auto;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        animation: cardFloat 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes cardFloat {
+        0% { transform: translateY(0px); }
+        100% { transform: translateY(-10px); }
+    }
+
+    .card-header {
+        text-align: center;
+        font-size: 1.1rem;
+        color: var(--accent-color);
+        margin-bottom: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .author-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+        text-align: left;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 0;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--primary-color);
+        min-width: 80px;
+        margin-right: 15px;
+    }
+
+    .info-value {
+        color: var(--text-primary);
+        font-weight: 400;
+    }
+
+    /* Container */
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 60px 20px;
+    }
+
+    /* Section styling */
+    .section {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.05) 0%, 
+            rgba(255, 255, 255, 0.02) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 40px;
+        margin: 40px 0;
+        position: relative;
+        backdrop-filter: blur(20px);
+        transition: all 0.4s ease;
+        animation: sectionSlide 0.8s ease-out;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .section:nth-child(even) {
+        animation: sectionSlideRight 0.8s ease-out;
+    }
+
+    @keyframes sectionSlide {
+        from { transform: translateX(-50px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes sectionSlideRight {
+        from { transform: translateX(50px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    .section:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 12px 48px rgba(37, 99, 235, 0.2);
+        transform: translateY(-8px);
+    }
+
+    .section-title {
+        font-family: 'Inter', sans-serif;
+        color: var(--primary-color);
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 25px;
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .section-title::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 30px;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        border-radius: 2px;
+    }
+
+    /* Code blocks with typing effect */
+    .code-terminal {
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 25px;
+        margin: 25px 0;
+        font-family: 'JetBrains Mono', monospace;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .code-terminal::before {
+        content: '$ mikrotik@router:~';
+        color: var(--success-color);
+        font-weight: 600;
+        display: block;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .code-line {
+        color: var(--text-primary);
+        margin: 8px 0;
+        position: relative;
+        padding-left: 20px;
+        transition: all 0.3s ease;
+        opacity: 0;
+        width: fit-content;
+        font-family: 'JetBrains Mono', monospace;
+        white-space: nowrap;
+    }
+
+    .code-line.typing {
+        opacity: 1;
+        border-right: 2px solid var(--accent-color);
+        animation: blink-cursor 1s infinite;
+    }
+
+    .code-line.typed {
+        opacity: 1;
+        border-right: none;
+    }
+
+    @keyframes blink-cursor {
+        0%, 50% { border-color: var(--accent-color); }
+        51%, 100% { border-color: transparent; }
+    }
+
+    .code-line:hover {
+        background: rgba(37, 99, 235, 0.1);
+        padding-left: 25px;
+        border-radius: 6px;
+    }
+
+    .code-line::before {
+        content: '▶';
+        position: absolute;
+        left: 0;
+        color: var(--accent-color);
+        font-size: 0.8rem;
+    }
+
+    .comment {
+        color: var(--text-muted);
+        font-style: italic;
+    }
+
+    .string {
+        color: var(--warning-color);
+        font-weight: 400;
+    }
+
+    .keyword {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    /* Alert boxes */
+    .tech-alert {
+        background: linear-gradient(135deg, 
+            rgba(37, 99, 235, 0.1), 
+            rgba(6, 182, 212, 0.1));
+        border: 1px solid var(--primary-color);
+        border-left: 4px solid var(--primary-color);
+        border-radius: 12px;
+        padding: 25px;
+        margin: 30px 0;
+        position: relative;
+        animation: alertPulse 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes alertPulse {
+        0% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.2); }
+        100% { box-shadow: 0 0 30px rgba(37, 99, 235, 0.4); }
+    }
+
+    .tech-alert::before {
+        content: '🔧 TEKNOLOGI INFO';
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: var(--bg-primary);
+        color: var(--primary-color);
+        padding: 5px 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border-radius: 20px;
+        border: 1px solid var(--primary-color);
+    }
+
+    .security-alert {
+        background: linear-gradient(135deg, 
+            rgba(220, 38, 38, 0.1), 
+            rgba(217, 119, 6, 0.1));
+        border: 1px solid var(--danger-color);
+        border-left: 4px solid var(--danger-color);
+        border-radius: 12px;
+        padding: 25px;
+        margin: 30px 0;
+        position: relative;
+        animation: securityBlink 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes securityBlink {
+        0% { border-left-color: var(--danger-color); }
+        100% { border-left-color: var(--warning-color); }
+    }
+
+    .security-alert::before {
+        content: '🛡️ KEAMANAN';
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: var(--bg-primary);
+        color: var(--danger-color);
+        padding: 5px 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border-radius: 20px;
+        border: 1px solid var(--danger-color);
+    }
+
+    .conclusion-box {
+        background: linear-gradient(135deg, 
+            rgba(5, 150, 105, 0.1), 
+            rgba(37, 99, 235, 0.1));
+        border: 1px solid var(--success-color);
+        border-left: 4px solid var(--success-color);
+        border-radius: 12px;
+        padding: 25px;
+        margin: 30px 0;
+        position: relative;
+        animation: conclusionGlow 4s ease-in-out infinite alternate;
+    }
+
+    @keyframes conclusionGlow {
+        0% { box-shadow: 0 0 20px rgba(5, 150, 105, 0.2); }
+        100% { box-shadow: 0 0 30px rgba(5, 150, 105, 0.4); }
+    }
+
+    .conclusion-box::before {
+        content: '📝 KESIMPULAN';
+        position: absolute;
+        top: -12px;
+        left: 20px;
+        background: var(--bg-primary);
+        color: var(--success-color);
+        padding: 5px 15px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border-radius: 20px;
+        border: 1px solid var(--success-color);
+    }
+
+    /* Bibliography */
+    .bibliography {
+        background: linear-gradient(135deg, 
+            rgba(255, 255, 255, 0.08), 
+            rgba(255, 255, 255, 0.04));
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        padding: 40px;
+        margin-top: 60px;
+        backdrop-filter: blur(20px);
+        animation: biblioFade 1.5s ease-out;
+    }
+
+    @keyframes biblioFade {
+        from { opacity: 0; transform: translateY(50px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bibliography h3 {
+        color: var(--accent-color);
+        font-family: 'Inter', sans-serif;
+        margin-bottom: 30px;
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .bibliography ul {
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .bibliography li {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        line-height: 1.8;
+        color: var(--text-secondary);
+        transition: all 0.3s ease;
+        position: relative;
+        padding-left: 50px;
+    }
+
+    .bibliography li::before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        font-size: 1.2rem;
+    }
+
+    .bibliography li:hover {
+        color: var(--text-primary);
+        transform: translateX(10px);
+        border-color: var(--primary-color);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(6, 182, 212, 0.05));
+    }
+
+    .bibliography a {
+        color: var(--primary-color);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        word-break: break-all;
+    }
+
+    .bibliography a:hover {
+        color: var(--accent-color);
+        text-decoration: underline;
+    }
+
+    /* Progress bar */
+    .scroll-progress {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 0%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--success-color));
+        z-index: 1000;
+        transition: width 0.3s ease;
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .main-title {
+            font-size: 2.5rem;
+        }
+        
+        .section {
+            padding: 25px 20px;
+            margin: 30px 0;
+        }
+        
+        .container {
+            padding: 40px 15px;
+        }
+
+        .code-terminal {
+            padding: 20px;
+            font-size: 0.9rem;
+        }
+
+        .author-info {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Smooth animations */
+    .fade-in {
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<!-- Tech Background -->
+<div class="tech-bg"></div>
+<div class="circuit-pattern"></div>
+<div class="tech-particles" id="techParticles"></div>
+
+<!-- Header -->
+<div class="header">
+    <h1 class="main-title">MIKROTIK ROUTEROS</h1>
+    <div class="subtitle">Static DNS & DNS Cache</div>
+    <div class="subtitle">Konfigurasi DNS di MikroTik untuk Kecepatan dan Keandalan Jaringan</div>
+    
+    <div class="author-card">
+        <div class="card-header">Informasi Penulis</div>
+        <div class="author-info">
+            <div class="info-item">
+                <span class="info-label">Penulis:</span>
+                <span class="info-value">Jovian Ekasakta</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Guru:</span>
+                <span class="info-value">Arief Wahyudin</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Kelas:</span>
+                <span class="info-value">XI TJKT 03</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Sekolah:</span>
+                <span class="info-value">Dwija Bhakti 01 Jombang</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Section 1 -->
+    <div class="section fade-in">
+        <h2 class="section-title">1. KONFIGURASI STATIC DNS DI MIKROTIK</h2>
+
+                                <div class="image-container">
+          <img src="no  (1).jpeg" alt="SERVICE IP pada MikroTik RouterOS">
+          <div class="image-caption">Tampilan halaman SERVICE IP pada MikroTik RouterOS</div>
+        </div>
+        
+        <p>Dari sumber MikroTik Documentation (2023), static DNS memungkinkan administrator menambahkan entri DNS yang tidak berubah (static) sehingga hostname tertentu selalu di-resolve ke IP yang ditentukan, terlepas dari perubahan pada server DNS upstream.</p>
+        
+        <p>Untuk menambahkan entri static DNS melalui CLI, gunakan perintah:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns static</span> add name=<span class="string">server.local</span> address=<span class="string">192.168.88.254</span> ttl=<span class="string">1d</span></div>
+            <div class="code-line comment"># Menambahkan entri server.local → 192.168.88.254 dengan TTL 1 hari</div>
+        </div>
+        
+        <p>Dari sumber ShellHacks (2023), setelah menambahkan entri static DNS, Anda dapat melihat daftar entri yang sudah dikonfigurasi dengan perintah:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns static</span> print</div>
+            <div class="code-line comment"># Output akan menampilkan daftar entri static DNS</div>
+            <div class="code-line">Columns: NAME, ADDRESS, TTL</div>
+            <div class="code-line"># NAME          ADDRESS        TTL</div>
+            <div class="code-line">0 router.local  192.168.88.1   1d</div>
+            <div class="code-line">1 server.local  192.168.88.254 1d</div>
+        </div>
+        
+        <div class="tech-alert">
+            <p>Dari sumber MikroTik Wiki (2021), untuk setiap entri static DNS tipe A dan AAAA, RouterOS secara otomatis menambahkan juga catatan PTR (Pointer Record) ke dalam cache, sehingga reverse lookup juga berfungsi.</p>
+        </div>
+        
+        <p>Dari sumber Cloudzy (2025), konfigurasi static DNS sangat berguna untuk menyimpan entri host lokal seperti server internal atau printer di jaringan Anda. Anda dapat menambahkan sebanyak mungkin entri host sesuai kebutuhan.</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns static</span> add name=<span class="string">printer.local</span> address=<span class="string">192.168.88.10</span></div>
+            <div class="code-line"><span class="keyword">/ip dns static</span> add name=<span class="string">nas.local</span> address=<span class="string">192.168.88.20</span></div>
+            <div class="code-line"><span class="keyword">/ip dns static</span> add name=<span class="string">camera.local</span> address=<span class="string">192.168.88.30</span></div>
+        </div>
+        
+        <p>Jika ingin menggunakan ekspresi reguler (regex) untuk mencocokkan beberapa domain sekaligus, gunakan parameter regexp:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns static</span> add regexp=<span class="string">".*\\.mikrotik\\.com"</span> address=<span class="string">10.0.0.1</span></div>
+            <div class="code-line comment"># Semua subdomain dari mikrotik.com akan diarahkan ke 10.0.0.1</div>
+        </div>
+        
+        <div class="security-alert">
+            <p>Dari sumber LightNode (2025), static DNS juga dapat digunakan sebagai metode pemblokiran domain dengan mengarahkan domain yang ingin diblokir ke alamat IP tidak valid (misalnya 0.0.0.0). Hal ini berguna untuk meningkatkan keamanan jaringan.</p>
+        </div>
+
+        <div class="conclusion-box">
+            <p>Dari 2 pendapat tersebut dapat disimpulkan bahwa konfigurasi static DNS di MikroTik menawarkan cara efektif untuk memetakan nama host ke alamat IP tertentu dengan beragam manfaat, mulai dari kemudahan pengelolaan perangkat internal hingga kontrol keamanan jaringan melalui pemblokiran domain.</p>
+        </div>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="section fade-in">
+        <h2 class="section-title">2. KONFIGURASI DNS CACHE DI MIKROTIK</h2>
+
+                                <div class="image-container">
+          <img src="no  (2).jpeg" alt="SERVICE IP pada MikroTik RouterOS">
+          <div class="image-caption">Tampilan halaman SERVICE IP pada MikroTik RouterOS</div>
+        </div>
+        
+        <p>Dari sumber MikroTik Documentation (2023), DNS cache di MikroTik menyimpan hasil query DNS selama periode waktu tertentu, sehingga permintaan berulang ke domain yang sama tidak perlu diteruskan ke server DNS eksternal, meningkatkan kecepatan resolusi nama domain.</p>
+        
+        <p>Untuk mengaktifkan dan mengonfigurasi DNS cache melalui CLI, gunakan perintah:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns</span> set allow-remote-requests=<span class="string">yes</span> cache-size=<span class="string">2048KiB</span> cache-max-ttl=<span class="string">1d</span></div>
+            <div class="code-line comment"># Mengaktifkan DNS cache dengan ukuran 2MB dan TTL maksimum 1 hari</div>
+        </div>
+        
+        <p>Dari sumber OperaVPS (2025), konfigurasi DNS cache yang lengkap sebaiknya mencakup parameter berikut:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns</span> set servers=<span class="string">8.8.8.8,8.8.4.4</span> allow-remote-requests=<span class="string">yes</span> \</div>
+            <div class="code-line">max-udp-packet-size=<span class="string">4096</span> query-server-timeout=<span class="string">2s</span> \</div>
+            <div class="code-line">query-total-timeout=<span class="string">10s</span> cache-size=<span class="string">2048KiB</span> cache-max-ttl=<span class="string">7d</span></div>
+            <div class="code-line comment"># Konfigurasi DNS cache yang lebih lengkap</div>
+        </div>
+        
+        <div class="tech-alert">
+            <p>Dari sumber IT Orakul (2025), ukuran cache default adalah 2048 KiB (2MB), yang cukup untuk penggunaan umum. Namun, jika Anda menggunakan fitur tambahan seperti Adlist (untuk pemblokiran iklan), cache perlu ditingkatkan karena daftar domain akan disimpan di cache.</p>
+        </div>
+        
+        <p>Untuk melihat status dan penggunaan DNS cache saat ini:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns</span> print</div>
+            <div class="code-line comment"># Menampilkan konfigurasi DNS saat ini</div>
+            <div class="code-line">servers: 8.8.8.8,8.8.4.4</div>
+            <div class="code-line">allow-remote-requests: yes</div>
+            <div class="code-line">cache-size: 2048KiB</div>
+            <div class="code-line">cache-max-ttl: 7d</div>
+            <div class="code-line">cache-used: 128KiB</div>
+        </div>
+        
+        <p>Dari sumber Cloudzy (2025), untuk melihat entri yang tersimpan dalam DNS cache, gunakan perintah:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns cache</span> print</div>
+            <div class="code-line comment"># Menampilkan daftar entri dalam DNS cache</div>
+        </div>
+        
+        <p>Jika perlu mengosongkan cache DNS, misalnya setelah perubahan konfigurasi DNS:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns cache</span> flush</div>
+            <div class="code-line comment"># Mengosongkan seluruh cache DNS</div>
+        </div>
+        
+        <div class="security-alert">
+            <p>Dari sumber LightNode (2025), penggunaan DNS cache pada MikroTik memungkinkan peningkatan performa jaringan, namun juga dapat meningkatkan konsumsi RAM. Sesuaikan ukuran cache dengan kapasitas router Anda untuk hasil optimal.</p>
+        </div>
+
+        <div class="conclusion-box">
+            <p>Dari 2 pendapat tersebut dapat disimpulkan bahwa DNS cache di MikroTik berperan penting dalam meningkatkan efisiensi jaringan dengan menyimpan hasil query DNS dan mengurangi latensi, serta menghemat bandwidth dengan mengurangi jumlah permintaan DNS yang dikirim ke server eksternal.</p>
+        </div>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="section fade-in">
+        <h2 class="section-title">3. VERIFIKASI DAN PEMECAHAN MASALAH DNS</h2>
+        
+        <p>Dari sumber MikroTik Documentation (2023), verifikasi konfigurasi DNS dapat dilakukan dengan melakukan ping ke nama domain untuk memastikan resolusi DNS berfungsi dengan baik.</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ping</span> google.com</div>
+            <div class="code-line comment"># Output yang diharapkan jika DNS bekerja dengan baik</div>
+            <div class="code-line">SEQ HOST           SIZE TTL TIME  STATUS</div>
+            <div class="code-line">0   142.250.74.14  56   55  14ms  echo reply</div>
+            <div class="code-line">1   142.250.74.14  56   55  15ms  echo reply</div>
+        </div>
+        
+        <p>Dari sumber MikroTik Wiki (2021), untuk melakukan resolusi DNS secara eksplisit tanpa menggunakan ping, gunakan perintah resolve:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line">:put [<span class="keyword">resolve</span> <span class="string">google.com</span>]</div>
+            <div class="code-line comment"># Output akan menampilkan alamat IP dari google.com</div>
+            <div class="code-line">142.250.74.14</div>
+        </div>
+        
+        <p>Jika terdapat masalah dengan resolusi DNS, periksa konfigurasi server DNS dan konektivitas ke server tersebut:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ping</span> 8.8.8.8</div>
+            <div class="code-line comment"># Verifikasi konektivitas ke server DNS Google</div>
+        </div>
+        
+        <div class="tech-alert">
+            <p>Dari sumber IT Orakul (2025), untuk mendiagnosis masalah DNS, aktifkan logging untuk peristiwa DNS dengan menjalankan perintah: <span class="keyword">/system logging add topics=dns,debug action=memory</span> untuk mencatat aktivitas DNS ke log sistem.</p>
+        </div>
+        
+        <p>Dari sumber System Zone (2021), masalah umum dengan DNS dapat disebabkan oleh cache yang korup. Jika mengalami masalah, coba kosongkan cache terlebih dahulu:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line"><span class="keyword">/ip dns cache</span> flush</div>
+            <div class="code-line comment"># Mengosongkan cache DNS untuk mengatasi masalah resolusi</div>
+        </div>
+        
+        <p>Untuk memverifikasi entri static DNS tertentu, gunakan perintah nslookup dari perangkat klien yang menggunakan router MikroTik sebagai server DNS:</p>
+        
+        <div class="code-terminal">
+            <div class="code-line comment"># Perintah ini dijalankan dari perangkat klien, bukan dari MikroTik</div>
+            <div class="code-line">nslookup server.local 192.168.88.1</div>
+            <div class="code-line comment"># Di mana 192.168.88.1 adalah alamat IP router MikroTik</div>
+        </div>
+        
+        <div class="security-alert">
+            <p>Dari sumber ShellHacks (2023), pastikan keamanan DNS dengan membatasi akses ke layanan DNS router MikroTik hanya untuk jaringan internal dengan menambahkan aturan firewall yang memblokir permintaan DNS dari luar.</p>
+        </div>
+
+        <div class="conclusion-box">
+            <p>Dari 2 pendapat tersebut dapat disimpulkan bahwa verifikasi dan pemecahan masalah DNS di MikroTik melibatkan penggunaan beberapa alat diagnostik seperti ping, resolve, dan logging, disertai pemahaman tentang cara kerja DNS cache dan static DNS untuk mengatasi masalah umum yang mungkin terjadi.</p>
+        </div>
+    </div>
+
+    <!-- Bibliography -->
+    <div class="bibliography">
+        <h3>DAFTAR PUSTAKA</h3>
+        <ul>
+            <li><strong>MikroTik Wiki.</strong> 2021. <em>Static DNS and Cache Interaction</em>. <a href="https://wiki.mikrotik.com/wiki/Static_DNS_and_Cache" target="_blank">https://wiki.mikrotik.com/wiki/Static_DNS_and_Cache</a>. Diakses pada 3 September 2025, pukul 07:15 WIB.</li>
+            
+            <li><strong>System Zone.</strong> 2021. <em>MikroTik DNS Client and Caching DNS Server Configuration</em>. <a href="https://systemzone.net/mikrotik-dns-client-and-caching-dns-server-configuration/" target="_blank">https://systemzone.net/mikrotik-dns-client-and-caching-dns-server-configuration/</a>. Diakses pada 3 September 2025, pukul 07:32 WIB.</li>
+            
+            <li><strong>ShellHacks.</strong> 2023. <em>MikroTik: Static DNS Entry</em>. <a href="https://www.shellhacks.com/mikrotik-static-dns-entry/" target="_blank">https://www.shellhacks.com/mikrotik-static-dns-entry/</a>. Diakses pada 3 September 2025, pukul 08:05 WIB.</li>
+            
+            <li><strong>MikroTik Documentation.</strong> 2023. <em>DNS - RouterOS</em>. <a href="https://help.mikrotik.com/docs/spaces/ROS/pages/37748767/DNS" target="_blank">https://help.mikrotik.com/docs/spaces/ROS/pages/37748767/DNS</a>. Diakses pada 3 September 2025, pukul 08:23 WIB.</li>
+            
+            <li><strong>MonoVM.</strong> 2024. <em>DNS Setup on MikroTik | MikroTik DNS Server</em>. <a href="https://monovm.com/blog/dns-configuration-on-mikrotik/" target="_blank">https://monovm.com/blog/dns-configuration-on-mikrotik/</a>. Diakses pada 3 September 2025, pukul 08:41 WIB.</li>
+            
+            <li><strong>Elder Node.</strong> 2024. <em>DNS Configuration Tutorial in Mikrotik</em>. <a href="https://blog.eldernode.com/dns-configuration-tutorial-in-mikrotik/" target="_blank">https://blog.eldernode.com/dns-configuration-tutorial-in-mikrotik/</a>. Diakses pada 3 September 2025, pukul 09:03 WIB.</li>
+
+            <li><strong>OperaVPS.</strong> 2025. <em>Visual Tutorial to Mikrotik DNS Server Configuration</em>. <a href="https://operavps.com/docs/dns-server-configuration-in-mikrotik/" target="_blank">https://operavps.com/docs/dns-server-configuration-in-mikrotik/</a>. Diakses pada 3 September 2025, pukul 09:20 WIB.</li>
+            
+            <li><strong>Cloudzy.</strong> 2025. <em>DNS Setup on MikroTik | A Quick Guide to MikroTik DNS Server</em>. <a href="https://cloudzy.com/blog/mikrotik-dns-server/" target="_blank">https://cloudzy.com/blog/mikrotik-dns-server/</a>. Diakses pada 3 September 2025, pukul 09:34 WIB.</li>
+            
+            <li><strong>LightNode.</strong> 2025. <em>MikroTik DNS Setup: A Simple and Quick Guide to Configuring DNS Server</em>. <a href="https://go.lightnode.com/tech/mikrotik-dns-server" target="_blank">https://go.lightnode.com/tech/mikrotik-dns-server</a>. Diakses pada 3 September 2025, pukul 09:47 WIB.</li>
+            
+            <li><strong>IT Orakul.</strong> 2025. <em>MikroTik DNS Configuration: A Comprehensive Guide</em>. <a href="https://itorakul.com.ua/en/mikrotik-dns-configuration/" target="_blank">https://itorakul.com.ua/en/mikrotik-dns-configuration/</a>. Diakses pada 3 September 2025, pukul 10:05 WIB.</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    // Tech particles animation
+    function createTechParticles() {
+        const particlesContainer = document.getElementById('techParticles');
+        const particleCount = 50;
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + 'vw';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+            
+            particlesContainer.appendChild(particle);
+        }
+    }
+
+    // Scroll progress
+    function updateScrollProgress() {
+        const scrollTop = document.documentElement.scrollTop;
+        const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrollPercent = (scrollTop / scrollHeight) * 100;
+        document.getElementById('scrollProgress').style.width = scrollPercent + '%';
+    }
+
+    // Typing effect for code lines
+    function typeText(element, text, speed = 30) {
+        return new Promise(resolve => {
+            element.classList.add('typing');
+            let i = 0;
+            element.innerHTML = '';
+            
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML = text.slice(0, i + 1);
+                    i++;
+                    setTimeout(type, speed);
+                } else {
+                    element.classList.remove('typing');
+                    element.classList.add('typed');
+                    resolve();
+                }
+            }
+            type();
+        });
+    }
+
+    // Animate code blocks with typing effect
+    function animateCodeBlocks() {
+        const codeTerminals = document.querySelectorAll('.code-terminal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const codeLines = entry.target.querySelectorAll('.code-line');
+                    let delay = 0;
+                    
+                    codeLines.forEach((line, index) => {
+                        const originalText = line.innerHTML;
+                        setTimeout(async () => {
+                            await typeText(line, originalText, 20);
+                        }, delay);
+                        delay += 500; // 500ms delay between lines
+                    });
+                    
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+
+        codeTerminals.forEach(terminal => {
+            observer.observe(terminal);
+        });
+    }
+
+    // Fade in animation on scroll
+    function animateOnScroll() {
+        const fadeElements = document.querySelectorAll('.fade-in');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeInUp 0.8s ease-out forwards';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        fadeElements.forEach(element => {
+            observer.observe(element);
+        });
+    }
+
+    // Code block hover effects
+    function addCodeEffects() {
+        const codeLines = document.querySelectorAll('.code-line');
+        codeLines.forEach(line => {
+            line.addEventListener('mouseenter', () => {
+                if (line.classList.contains('typed')) {
+                    line.style.transform = 'translateX(5px)';
+                    line.style.background = 'rgba(37, 99, 235, 0.1)';
+                }
+            });
+            line.addEventListener('mouseleave', () => {
+                line.style.transform = 'translateX(0)';
+                line.style.background = 'transparent';
+            });
+        });
+    }
+
+    // Section hover effects
+    function addSectionEffects() {
+        const sections = document.querySelectorAll('.section');
+        sections.forEach(section => {
+            section.addEventListener('mouseenter', () => {
+                section.style.transform = 'translateY(-8px)';
+            });
+            section.addEventListener('mouseleave', () => {
+                section.style.transform = 'translateY(0)';
+            });
+        });
+    }
+
+    // Initialize everything
+    document.addEventListener('DOMContentLoaded', () => {
+        createTechParticles();
+        animateOnScroll();
+        animateCodeBlocks();
+        addCodeEffects();
+        addSectionEffects();
+        
+        // Scroll events
+        window.addEventListener('scroll', updateScrollProgress);
+        
+        // Smooth scrolling for better UX
+        document.documentElement.style.scrollBehavior = 'smooth';
+    });
+
+    // Add responsive particle count
+    function adjustParticleCount() {
+        const width = window.innerWidth;
+        const particlesContainer = document.getElementById('techParticles');
+        const currentParticles = particlesContainer.children.length;
+        const targetParticles = width < 768 ? 20 : width < 1200 ? 35 : 50;
+        
+        if (currentParticles !== targetParticles) {
+            particlesContainer.innerHTML = '';
+            for (let i = 0; i < targetParticles; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+    }
+
+    window.addEventListener('resize', adjustParticleCount);
+
+</script>
+</head>
+</html>
